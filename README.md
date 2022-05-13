@@ -15,6 +15,6 @@ place it in the same folder/directory as the .jar file. You can then proceed to 
 
 CODE (for smelly coders): You want to run TeamGUI.java. Since the project is not in a package, you want
 to ensure that all the files are in the same folder. Open CMD in the current directory, then proceed to run
-'javac TeamGUI.java' and then run it with 'java TeamGUI'.
+`javac TeamGUI.java` and then run it with `java TeamGUI`.
 
 If you have any questions DM me on discord: Dannypicacho#8187
