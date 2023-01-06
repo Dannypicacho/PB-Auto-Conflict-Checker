@@ -1,6 +1,6 @@
 PANDORA'S BOX AUTO CONFLICT CHECKER
 ------------------------------------
-v1.0.0 completed May 13, 2022
+v2.0.0 completed January 5, 2023
 
 AUTHOR: Danny Picazo
 
