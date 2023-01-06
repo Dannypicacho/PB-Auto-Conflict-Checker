@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 public class TeamGUI implements ActionListener{
@@ -93,12 +94,13 @@ public class TeamGUI implements ActionListener{
                 team[i] = model.getElementAt(i);
             }
             try {
-                ArrayList<ArrayList<String>> conflictSuperArray = ConflictChecker.makeTeam(team);
-                ArrayList<String> cc = conflictSuperArray.get(0);
-                ArrayList<String> dk = conflictSuperArray.get(1);
-                if(!ConflictChecker.incompletes.isEmpty()){
+                Team finalTeam = ConflictChecker.makeTeam(team);
+                ArrayList<String> cc = finalTeam.avoidConflicts;
+                ArrayList<String> dk = finalTeam.dontKnowConflicts;
+                ArrayList<String> incompletes = finalTeam.unfinishedUsers;
+                if(!incompletes.isEmpty()){
                     String msg = "Warning:\nThe following users did not complete the form:\n";
-                    for(String missing : ConflictChecker.incompletes){
+                    for(String missing : incompletes){
                         msg += missing + "\n";
                     }
                     msg += "Consider them as no conflicts and proceed?";
@@ -106,12 +108,7 @@ public class TeamGUI implements ActionListener{
                             "WARNING - UNFILLED FORMS", JOptionPane.WARNING_MESSAGE);
                 }
                 if(cc.isEmpty()){
-                    if(dk.isEmpty()){
-                        String msg = "This team has no conflicts!";
-                        JOptionPane.showMessageDialog(null, msg, 
-                                "SUCCESS", JOptionPane.INFORMATION_MESSAGE);
-                    }
-                    else{
+                    if(!dk.isEmpty()){
                         String msg = "This team has no avoidance conflicts.";
                         msg += "\nIt does, however, have some conflicts with teammates knowing eachother.";
                         msg += "\nYou are completely free to ignore these, but they will be listed below anyway: \n\n";
@@ -121,6 +118,12 @@ public class TeamGUI implements ActionListener{
                         JOptionPane.showMessageDialog(null, msg, 
                             "OPTIONAL WARNING", JOptionPane.WARNING_MESSAGE);
                     }
+                    String msg = "This team has no conflicts!\n\n";
+                    msg += "Chemistry score: ";
+                    DecimalFormat df = new DecimalFormat("0.00");
+                    msg += df.format(finalTeam.chemScore) + "%";
+                    JOptionPane.showMessageDialog(null, msg, 
+                            "SUCCESS", JOptionPane.INFORMATION_MESSAGE);
                 }
                 else{
                     String msg = "This team has the following conflicts: \n";

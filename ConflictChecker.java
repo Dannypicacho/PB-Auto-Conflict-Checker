@@ -17,9 +17,9 @@ public class ConflictChecker{
     // < Entry Player , < Other Player, Response > >
     private static HashMap<String, HashMap<String, String>> entries = new HashMap<String, HashMap<String, String>>();
     public static String[] nameColumns;
-    public static ArrayList<String> incompletes = new ArrayList<String>();
     private static final String FILENAME = "./responses.tsv";
     private static HashMap<String, Integer> desiredKnownResponses = new HashMap<String, Integer>();
+    private static boolean inPlayerMode = false;
 
     ConflictChecker() {
         // first, read all the responses
@@ -113,6 +113,10 @@ public class ConflictChecker{
                 for(int i = 3; i < splitted.length; i++){
                     // splitted[i] represents answer (e.g., Neutral)
                     // nameColumns[i-3] represents the columns (e.g., yumi)
+                    // enable player mode
+                    if(splitted[i].equals("I'd love to") || desiredKnown == 3){
+                        inPlayerMode = true;
+                    }
                     if(splitted[i].equals("That's me!") || splitted[i].equals("This is me")){
                         meCount++;
                         // entry user will be the user who submitted the entry
@@ -162,7 +166,7 @@ public class ConflictChecker{
         }
     }
 
-    public static ArrayList<ArrayList<String>> makeTeam(String[] players) throws NotEnoughPlayersException{
+    public static Team makeTeam(String[] players) throws NotEnoughPlayersException{
         // cannot make it only 2
         if(players.length < 2){
             System.out.println("Please enter at least 2 players.");
@@ -171,11 +175,14 @@ public class ConflictChecker{
         ArrayList<String> conflicts = new ArrayList<String>();
         ArrayList<String> unfinished = new ArrayList<String>();
         ArrayList<String> dontKnowConflicts = new ArrayList<String>();
+        int score = 0;
+        // int counter = 0;
         for(String player : players){
             ArrayList<String> dontKnows = new ArrayList<String>();
             if(!entries.containsKey(player)){
                 System.out.println(player + " has not filled out the form!");
                 unfinished.add(player);
+                // counter += players.length-1;
                 continue;
             }
             HashMap<String, String> playerEntries = entries.get(player);
@@ -185,7 +192,8 @@ public class ConflictChecker{
                 // in the case of a new player being added, many old entries
                 // will not have a response for said new player
                 // thus these must be skipped
-                else if(!playerEntries.containsKey(teammate)){
+                // counter++;
+                if(!playerEntries.containsKey(teammate)){
                     System.out.println(player + " has no response for " + teammate);
                     continue;
                 }
@@ -206,7 +214,27 @@ public class ConflictChecker{
                 }
                 // yes or neutral
                 else{
-                    System.out.println(player + " does not have a conflict with " + teammate);
+                    if(response.equals("I'd like to")){
+                        System.out.println(player + " wants to team with " + teammate);
+                        score++;
+                        // value will be 2 for players
+                        if(inPlayerMode) {score++;}
+                    }
+                    // only an option for players
+                    else if(response.equals("I'd love to")){
+                        System.out.println(player + " would love to team with " + teammate);
+                        // just in case
+                        if(!inPlayerMode){
+                            JOptionPane.showMessageDialog(null, "What the fuck did you do!?", 
+                            "IMPOSSIBLE ERROR - YOU FUCKED UP", JOptionPane.ERROR_MESSAGE);
+                            System.exit(1);
+                        }
+                        // score given is 3
+                        score += 3;
+                    }
+                    else{
+                        System.out.println(player + " does not have a conflict with " + teammate);
+                    }
                 }
             }
             // dont know responses surpases desired amount by player
@@ -223,14 +251,24 @@ public class ConflictChecker{
                 dontKnowConflicts.add(dkConflict);
             }
         }
-        incompletes = unfinished;
-        // return an array with conflicts
-        // at index 0: arraylist of 'avoid' conflicts
-        // at index 1: arraylist of 'dont know' conflicts
-        ArrayList<ArrayList<String>> allConflictArray = new ArrayList<ArrayList<String>>();
-        allConflictArray.add(0, conflicts);
-        allConflictArray.add(1, dontKnowConflicts);
-        return allConflictArray;
+        // System.out.println(score + "\t/\t" + counter);
+        // return a Team
+        Team theTeam = new Team();
+        theTeam.avoidConflicts = conflicts;
+        theTeam.unfinishedUsers = unfinished;
+        theTeam.dontKnowConflicts = dontKnowConflicts;
+        if(inPlayerMode){
+            // 3n(n-1) instead of n(n-1) for max score, where 3 is the most an answer can give
+            theTeam.chemScore = theTeam.chemScore = (float)100.0*(float)score/(float)(3.0*players.length*(players.length-1));
+        }
+        else{
+            // max score is n(n-1)
+            theTeam.chemScore = (float)100.0 * (float)score / (float)(players.length * (players.length - 1));
+        }
+        theTeam.members = players;
+        // theTeam.playerMode = inPlayerMode;
+        System.out.println(theTeam.chemScore);
+        return theTeam;
     }
 
     @SuppressWarnings("unused")
