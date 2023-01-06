@@ -19,6 +19,7 @@ public class ConflictChecker{
     public static String[] nameColumns;
     public static ArrayList<String> incompletes = new ArrayList<String>();
     private static final String FILENAME = "./responses.tsv";
+    private static HashMap<String, Integer> desiredKnownResponses = new HashMap<String, Integer>();
 
     ConflictChecker() {
         // first, read all the responses
@@ -44,11 +45,19 @@ public class ConflictChecker{
             msg += "Please have these users correct it before proceding.";
             JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
-        } catch (Exception g){
-            JOptionPane.showMessageDialog(null, 
-                    "An unknown error occured.\n Please contact Dannypicacho.", 
-                                                            "ERROR", JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalStateException g) {
+            String msg = "Regex error. It appears the response sheet has been manually tampered with."
+                        +"\nIt's likely that you've manually edited something which broke the program."
+                        + "\nPlease remember to delete any extra rows/columns (such as counters) prior to downloading the sheet."
+                        +"\nIf that's not the case, please ensure that all the names at the top of the columns are encased with square brackets. [name]";
+            JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
             g.printStackTrace();
+            System.exit(1);
+        } catch (Exception z){
+            JOptionPane.showMessageDialog(null, 
+                    "An unknown error occured.\nPlease contact Dannypicacho.", 
+                                                            "ERROR", JOptionPane.ERROR_MESSAGE);
+            z.printStackTrace();
             System.exit(1);
         }
 
@@ -92,14 +101,15 @@ public class ConflictChecker{
                 @SuppressWarnings("unused")
                 String timestamp = splitted[0];
                 String discord = splitted[1];
-                @SuppressWarnings("unused")
-                String arbitrary = splitted[2];
+                // this number will represent how many teammates the player wants to know
+                int desiredKnown = Character.getNumericValue(splitted[2].charAt(0)) - 1;
                 // in the case that the entry user variable is not properly 
                 // updated, then it will take a default error value
                 String entryUser = "DEFAULT VALUE - ERROR";
                 // counts number of "That's me!" responses -- must be 1
                 int meCount = 0;
                 HashMap<String, String> responses = new HashMap<String, String>();
+                System.out.println(discord + " wants to know at least " + desiredKnown + " teammates.");
                 for(int i = 3; i < splitted.length; i++){
                     // splitted[i] represents answer (e.g., Neutral)
                     // nameColumns[i-3] represents the columns (e.g., yumi)
@@ -120,6 +130,7 @@ public class ConflictChecker{
                     System.out.println("Identity Crisis: " + discord);
                     identityCrises.add(discord);
                 }
+                desiredKnownResponses.put(entryUser, desiredKnown);
                 entries.put(entryUser, responses);
                 System.out.println("FINISHING ENTRY FOR: " + entryUser);
             }
@@ -151,7 +162,7 @@ public class ConflictChecker{
         }
     }
 
-    public static ArrayList<String> makeTeam(String[] players) throws NotEnoughPlayersException{
+    public static ArrayList<ArrayList<String>> makeTeam(String[] players) throws NotEnoughPlayersException{
         // cannot make it only 2
         if(players.length < 2){
             System.out.println("Please enter at least 2 players.");
@@ -159,7 +170,9 @@ public class ConflictChecker{
         }
         ArrayList<String> conflicts = new ArrayList<String>();
         ArrayList<String> unfinished = new ArrayList<String>();
+        ArrayList<String> dontKnowConflicts = new ArrayList<String>();
         for(String player : players){
+            ArrayList<String> dontKnows = new ArrayList<String>();
             if(!entries.containsKey(player)){
                 System.out.println(player + " has not filled out the form!");
                 unfinished.add(player);
@@ -171,26 +184,53 @@ public class ConflictChecker{
                 if(player.equals(teammate)) {continue;}
                 // in the case of a new player being added, many old entries
                 // will not have a response for said new player
+                // thus these must be skipped
                 else if(!playerEntries.containsKey(teammate)){
                     System.out.println(player + " has no response for " + teammate);
                     continue;
                 }
+
                 // there exists a response!
                 String response = playerEntries.get(teammate);
+                // conflict
                 if(response.equals("I'd rather not") || response.equals("Please don't")){
                     System.out.print("CONFLICT: ");
                     String msg = player + " does not want to team with " + teammate;
                     System.out.println(msg);
                     conflicts.add(msg);
                 }
+                // response is "don't know"
+                else if (response.equals("Don't know")){
+                    dontKnows.add(teammate);
+                    System.out.println(player + " does not know " + teammate + " (no conflict)");
+                }
+                // yes or neutral
                 else{
                     System.out.println(player + " does not have a conflict with " + teammate);
                 }
             }
+            // dont know responses surpases desired amount by player
+            int dk = desiredKnownResponses.get(player);
+            if(dk > players.length - dontKnows.size() - 1){
+                String dkConflict = player + " would prefer to know at least " + dk + " teammate";
+                if(dk > 1){
+                    dkConflict += "s";
+                }
+                dkConflict += ".";
+                for(String randomscrandom : dontKnows){
+                    dkConflict += "\n    >>" + player + " does not know " + randomscrandom;
+                }
+                dontKnowConflicts.add(dkConflict);
+            }
         }
         incompletes = unfinished;
-        // return a list of conflicts
-        return conflicts;
+        // return an array with conflicts
+        // at index 0: arraylist of 'avoid' conflicts
+        // at index 1: arraylist of 'dont know' conflicts
+        ArrayList<ArrayList<String>> allConflictArray = new ArrayList<ArrayList<String>>();
+        allConflictArray.add(0, conflicts);
+        allConflictArray.add(1, dontKnowConflicts);
+        return allConflictArray;
     }
 
     @SuppressWarnings("unused")

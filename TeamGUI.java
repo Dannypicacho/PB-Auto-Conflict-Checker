@@ -93,7 +93,9 @@ public class TeamGUI implements ActionListener{
                 team[i] = model.getElementAt(i);
             }
             try {
-                ArrayList<String> cc = ConflictChecker.makeTeam(team);
+                ArrayList<ArrayList<String>> conflictSuperArray = ConflictChecker.makeTeam(team);
+                ArrayList<String> cc = conflictSuperArray.get(0);
+                ArrayList<String> dk = conflictSuperArray.get(1);
                 if(!ConflictChecker.incompletes.isEmpty()){
                     String msg = "Warning:\nThe following users did not complete the form:\n";
                     for(String missing : ConflictChecker.incompletes){
@@ -104,9 +106,21 @@ public class TeamGUI implements ActionListener{
                             "WARNING - UNFILLED FORMS", JOptionPane.WARNING_MESSAGE);
                 }
                 if(cc.isEmpty()){
-                    String msg = "This team has no conflicts!";
-                    JOptionPane.showMessageDialog(null, msg, 
-                            "SUCCESS", JOptionPane.INFORMATION_MESSAGE);
+                    if(dk.isEmpty()){
+                        String msg = "This team has no conflicts!";
+                        JOptionPane.showMessageDialog(null, msg, 
+                                "SUCCESS", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    else{
+                        String msg = "This team has no avoidance conflicts.";
+                        msg += "\nIt does, however, have some conflicts with teammates knowing eachother.";
+                        msg += "\nYou are completely free to ignore these, but they will be listed below anyway: \n\n";
+                        for(String conflict : dk){
+                            msg += conflict + "\n";
+                        }
+                        JOptionPane.showMessageDialog(null, msg, 
+                            "OPTIONAL WARNING", JOptionPane.WARNING_MESSAGE);
+                    }
                 }
                 else{
                     String msg = "This team has the following conflicts: \n";
