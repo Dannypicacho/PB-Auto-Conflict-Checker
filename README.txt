@@ -17,4 +17,8 @@ CODE (for smelly coders): You want to run TeamGUI.java. Since the project is not
 to ensure that all the files are in the same folder. Open CMD in the current directory, then proceed to run
 'javac TeamGUI.java' and then run it with 'java TeamGUI'.
 
+HOW TO USE THE PROGRAM
+-----------------------
+https://docs.google.com/document/d/1GA8EfX4dB7LhoQ9D8-vNB17CrKZsuejMRHu8X4rMqKs/edit?usp=sharing
+
 If you have any questions DM me on discord: Dannypicacho#8187
